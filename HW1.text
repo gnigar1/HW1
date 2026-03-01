@@ -1,0 +1,50 @@
+    .text
+    .align 2
+
+    /* Inputs:
+         r0 = m (start)
+         r1 = n (end)
+       Output:
+         r2 = sum from m to n (inclusive)
+       Rules:
+         - NO B / B[cond]
+         - NO labels
+         - control flow ONLY via mov pc, <value>
+         - r3 = bytes-per-word (4)
+         - r4 = calculated offset (bytes)
+         - r5 = final computed target address (jump target)
+         - terminate with SVC 2
+    */
+
+    /* init */
+    mov     r2, #0          /* sum = 0 */
+    mov     r3, #4          /* bytes-per-word = 4 */
+
+    /* -------------------------
+       LOOP_CHECK (no label)
+       ------------------------- */
+    cmp     r0, r1          /* compare m and n */
+
+    /* if (r0 > r1) jump to EXIT using mov pc */
+    movgt   r5, pc          /* r5 = PC (current + 8) */
+    movgt   r4, #10         /* r4 = number of words to jump forward */
+    mulgt   r4, r4, r3      /* r4 = bytes offset = 10 * 4 = 40 */
+    addgt   r5, r5, r4      /* r5 = target address (EXIT) */
+   
+    /* -------------------------
+       LOOP_BODY (no label)
+       ------------------------- */
+    add     r2, r2, r0      /* sum += m */
+    add     r0, r0, #1      /* m++ */
+
+    /* jump back to LOOP_CHECK using mov pc */
+    mov     r5, pc          /* r5 = PC (current + 8) */
+    mov     r4, #10         /* r4 = number of words to jump back */
+    mul     r4, r4, r3      /* r4 = bytes offset = 10 * 4 = 40 */
+    sub     r5, r5, r4      /* r5 = target address (LOOP_CHECK) */
+    mov     pc, r5          /* jump to LOOP_CHECK */
+
+    /* -------------------------
+       EXIT (no label)
+       ------------------------- */
+    svc     #2              /* terminate */
